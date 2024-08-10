@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const fs = require('fs');
 const dotenv = require('dotenv');
-const fetch = require('node-fetch'); // Pastikan untuk menginstal 'node-fetch' jika belum ada
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 dotenv.config();
 
