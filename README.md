@@ -1,4 +1,3 @@
-Berikut adalah README untuk proyek WhatsApp Multi-Session Bot dalam bahasa Indonesia:
 
 ---
 
