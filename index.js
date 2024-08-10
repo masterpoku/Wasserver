@@ -10,7 +10,7 @@ const {processLoop} = require('./load')
 // Inisialisasi aplikasi Express
 dotenv.config();
 const app = express();
-const port = 3000;
+const port = 40000;
 const FIREBASE_URL = process.env.FIREBASE_URL; // Masukkan URL Firebase Anda di file .env
 
 // URL Telegram Bot API
