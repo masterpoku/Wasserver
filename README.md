@@ -3,7 +3,7 @@
 
 # WhatsApp Multi-Session Bot
 
-Proyek ini adalah bot WhatsApp multi-sesi yang berinteraksi dengan API WhatsApp, memungkinkan Anda untuk mengelola beberapa sesi WhatsApp, mengirim dan menerima pesan, serta terintegrasi dengan Firebase untuk pencatatan pesan dan manajemen sesi. Bot ini dibangun menggunakan Node.js, Express, dan `wa-multi-session`.
+Proyek ini adalah bot WhatsApp multi-sesi yang berinteraksi dengan API WhatsApp, memungkinkan Anda untuk mengelola beberapa sesi WhatsApp, mengirim dan menerima pesan, serta terintegrasi dengan Firebase untuk pencatatan pesan dan manajemen sesi. Bot ini dibangun menggunakan Node.js, Express, dan `Wasserver`.
 
 ## Fitur
 
@@ -24,8 +24,8 @@ Proyek ini adalah bot WhatsApp multi-sesi yang berinteraksi dengan API WhatsApp,
 1. **Clone repositori ini:**
 
    ```bash
-   git clone https://github.com/username/whatsapp-multi-session-bot.git
-   cd whatsapp-multi-session-bot
+   git clone https://github.com/masterpoku/Wasserver.git
+   cd Wasserver
    ```
 
 2. **Instal dependensi:**
@@ -54,10 +54,10 @@ Proyek ini adalah bot WhatsApp multi-sesi yang berinteraksi dengan API WhatsApp,
 ## Penggunaan
 
 - **Membuat Sesi Baru:**
-  Akses `/create?name=SesiBaru` untuk membuat sesi baru. QR code untuk sesi tersebut akan dihasilkan dan disimpan di folder `qrcodes`.
+  Akses `http://localhost:3000/create?name=SesiBaru` untuk membuat sesi baru. QR code untuk sesi tersebut akan dihasilkan dan disimpan di folder `qrcodes` dan dapat diakses melalui `http://localhost:3000/qrcode/SesiBaru`.
 
-- **Mengirim Pesan:**
-  Kirim POST request ke `/send-message` dengan payload berikut:
+- **Mengirim Pesan Menggunakan Sesi:**
+  Kirim POST request ke `http://localhost:3000/send-message` dengan payload berikut:
 
   ```json
   {
@@ -67,19 +67,29 @@ Proyek ini adalah bot WhatsApp multi-sesi yang berinteraksi dengan API WhatsApp,
   }
   ```
 
-  Jika `sessionId` tidak diberikan, pesan akan dikirim menggunakan sesi berikutnya dalam daftar secara bergiliran.
+- **Mengirim Pesan Tanpa Sesi:**
+  Kirim POST request ke `http://localhost:3000/send-message` dengan payload berikut:
+
+  ```json
+  {
+    "to": "NomorTujuan",
+    "text": "Pesan yang akan dikirim"
+  }
+  ```
+
+  Pesan akan dikirim menggunakan sesi yang tersedia secara bergiliran.
 
 - **Mengambil QR Code:**
-  Akses `/qrcode/:sessionId` untuk mendapatkan QR code untuk sesi yang bersangkutan.
+  Akses `http://localhost:3000/qrcode/:sessionId` untuk mendapatkan QR code untuk sesi yang bersangkutan.
 
 - **Memeriksa Status Sesi:**
-  Akses `/get` untuk mendapatkan daftar semua sesi yang sedang aktif.
+  Akses `http://localhost:3000/get` untuk mendapatkan daftar semua sesi yang sedang aktif.
 
-## Folder Struktur
+## Struktur Folder
 
 - `wa_credentials`: Menyimpan kredensial sesi WhatsApp.
 - `qrcodes`: Menyimpan QR code untuk sesi-sesi yang belum tersambung.
-- `numbers.txt`: Menyimpan nomor yang telah dikirimi pesan.
+- `numbers.txt`: Menyimpan nomor-nomor yang telah dikirimi pesan.
 
 ## Lisensi
 
@@ -87,4 +97,4 @@ Proyek ini dilisensikan di bawah [MIT License](LICENSE).
 
 ---
 
-Dengan README ini, pengguna lain dapat dengan mudah memahami dan menjalankan proyek WhatsApp Multi-Session Bot Anda.
+README ini memberikan panduan yang jelas tentang bagaimana cara menggunakan dan menjalankan bot WhatsApp multi-sesi Anda, serta menjelaskan fitur dan struktur proyek dengan detail.
