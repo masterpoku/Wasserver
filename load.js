@@ -1,9 +1,7 @@
-const express = require('express');
 const axios = require('axios');
 const fs = require('fs');
 const dotenv = require('dotenv');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-
+const whatsapp = require('wa-multi-session');
 dotenv.config();
 
 // URL Firebase Realtime Database
@@ -17,6 +15,10 @@ let temporaryData = {};
 
 // Flag untuk mencegah tumpang tindih proses
 let isProcessing = false;
+
+// Daftar session untuk round-robin
+let sessionList = ["session1", "session2", "session3"]; // Ganti dengan sesi yang sesuai
+let currentSessionIndex = 0;
 
 // Fungsi untuk mengambil data dari Firebase
 const getDataFromFirebase = async (path) => {
@@ -45,7 +47,7 @@ const sendTelegramNotification = async (message) => {
     try {
         const response = await axios.get(`${TELEGRAM_BOT_API}/sendMessage`, {
             params: {
-                chat_id: '406423057',
+                chat_id: '406423057', // Ganti dengan ID chat Telegram yang sesuai
                 text: message,
             },
         });
@@ -79,7 +81,7 @@ const loopThroughData = async (path) => {
                 console.log(`Menampilkan data ${key}:`, item);
 
                 // Kirim permintaan ke server lokal
-                await sendRequest(`62${item.to}`, item.message);
+                await sendRequest(item.to, item.message);
 
                 // Perbarui status data menjadi true setelah dikirim
                 await updateStatusInFirebase(path, key);
@@ -109,50 +111,53 @@ const loopThroughData = async (path) => {
 };
 
 // Fungsi untuk mengirim permintaan ke server lokal
-async function sendRequest(to, text) {
+const sendRequest = async (to, text) => {
+    // Melakukan validasi pada `to` dan `text`
+    if (!to || !text) {
+        throw new Error('Missing required fields: "to" and "text" are required.');
+    }
+
+    let sessionId;
+
+    if (!sessionId) {
+        // Gunakan metode round-robin untuk memilih session berikutnya
+        sessionId = sessionList[currentSessionIndex];
+        currentSessionIndex = (currentSessionIndex + 1) % sessionList.length; // Pindah ke sesi berikutnya
+
+        if (!sessionId) {
+            throw new Error("No available sessions. Please try again later.");
+        }
+    }
+
     try {
-        const response = await fetch('http://localhost:3000/send-message', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                to,
-                text,
-            }),
+        // Mengirimkan indikasi typing
+        await whatsapp.sendTyping({
+            sessionId: sessionId,
+            to: to,
+            duration: 3000,
         });
 
-        const data = await response.json();
-        console.log(data);
+        // Mengirimkan pesan teks
+        await whatsapp.sendTextMessage({
+            sessionId,
+            to,
+            text
+        });
+
+        saveNumberToFile(`62${to}`);
+
+        // Update jumlah pesan yang dikirim di Firebase
+        let currentCount = await getMessageCountFromFirebase(sessionId);
+        currentCount += 1;
+        await updateMessageCountInFirebase(sessionId, currentCount);
+
+        console.log(`Message sent with session ${sessionId} to ${to}: ${text}`);
     } catch (error) {
-        console.error('Error sending request:', error);
+        console.error('Error sending message:', error);
+        throw new Error('Failed to send message');
     }
-}
+};
 
-// Express
-const app = express();
-const port = 3001;
-
-app.use(express.json());
-
-app.get('/status', async (req, res) => {
-    const status = fs.readFileSync('status.txt', 'utf-8');
-    res.json({ status: status === '0' ? 'Processing' : 'Finished' });
-});
-
-app.put('/status', async (req, res) => {
-    const { status } = req.body;
-    if (status === '0' || status === '1') {
-        fs.writeFileSync('status.txt', status);
-        res.json({ message: 'Status updated successfully' });
-    } else {
-        res.status(400).json({ error: 'Invalid status' });
-    }
-});
-
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
 
 // Fungsi utama yang akan terus melakukan loop dan memproses data
 const processLoop = async () => {
@@ -172,5 +177,7 @@ const processLoop = async () => {
     setTimeout(processLoop, 10000); // 10 detik
 };
 
+// Mulai proses looping
+processLoop();
 
 module.exports = {processLoop};
