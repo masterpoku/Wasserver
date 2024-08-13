@@ -272,11 +272,17 @@ const initializeSessions = async () => {
 
     whatsapp.onMessageReceived(async (msg) => {
       const phone = msg.key.remoteJid.replace('@s.whatsapp.net', '');
-      pesan = msg.message?.extendedTextMessage && msg.message?.extendedTextMessage.text ? msg.message?.extendedTextMessage.text : "";
-      if (pesan.trim() === "") { // Check if text is empty or whitespace
-          pesan = msg.message?.conversation || ""; // Use conversation from msg.message if text is empty
-      }
-      if (!msg.key.fromMe) {
+      let pesan = null; // Default value
+      if (msg.key.fromMe === true) {
+        pesan = null;
+          } else {
+              //pesan = message.extendedTextMessage && message.extendedTextMessage.text ? message.extendedTextMessage.text : "";
+              pesan = msg.message?.extendedTextMessage && msg.message?.extendedTextMessage.text ? msg.message?.extendedTextMessage.text : "";
+              if (pesan.trim() === "") { // Check if text is empty or whitespace
+                  pesan = msg.message?.conversation || ""; // Use conversation from msg.message if text is empty
+              }
+          }
+
         if (await isNumberInFile(phone)) {
           if (pesan) {
             const messageData = {
@@ -293,7 +299,7 @@ const initializeSessions = async () => {
             }
           }
         }
-      }
+      
         console.log(`New Message Received on Session ${msg.sessionId}:`);
         console.log(`From: ${phone}`);
         console.log(`Pesan: ${pesan}`);
