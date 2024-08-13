@@ -282,8 +282,8 @@ const initializeSessions = async () => {
                   pesan = msg.message?.conversation || ""; // Use conversation from msg.message if text is empty
               }
           }
-
         if (await isNumberInFile(phone)) {
+          console.log('ada');
           if (pesan) {
             const messageData = {
               from: phone,
@@ -299,6 +299,7 @@ const initializeSessions = async () => {
             }
           }
         }
+        
       
         console.log(`New Message Received on Session ${msg.sessionId}:`);
         console.log(`From: ${phone}`);
@@ -425,7 +426,7 @@ app.post('/send-message', async (req, res) => {
       text
     });
 
-    saveNumberToFile(`62${to}`);
+    saveNumberToFile(to);
 
     let currentCount = await getMessageCountFromFirebase(sessionId);
     currentCount += 1;
