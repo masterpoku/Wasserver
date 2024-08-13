@@ -272,34 +272,12 @@ const initializeSessions = async () => {
 
     whatsapp.onMessageReceived(async (msg) => {
       const phone = msg.key.remoteJid.replace('@s.whatsapp.net', '');
-      let pesan = msg.message?.extendedTextMessage?.text || ""; // Default value
-      
-      if (!msg.key.fromMe) {
-        console.log(`New Message Received on Session ${msg.sessionId}:`);
-        console.log(`From: ${phone}`);
-        console.log(`Pesan: ${pesan}`);
-        console.log('--------------------------------------------------------');
+      pesan = msg.message?.extendedTextMessage && msg.message?.extendedTextMessage.text ? msg.message?.extendedTextMessage.text : "";
+      if (pesan.trim() === "") { // Check if text is empty or whitespace
+          pesan = msg.message?.conversation || ""; // Use conversation from msg.message if text is empty
       }
-    
-      if (await isNumberInFile(phone)) {
-        // Only read and process the message if it's not from the current user
-        if (!msg.key.fromMe) {
-          await whatsapp.readMessage({
-            sessionId: msg.sessionId,
-            key: msg.key,
-          });
-    
-          // Set 'pesan' to null if the message is from the current user, otherwise handle it
-          if (msg.key.fromMe) {
-            pesan = null;
-          } else {
-            pesan = msg.message?.extendedTextMessage?.text || msg.message?.conversation || "";
-            
-            if (pesan.trim() === "") {
-              pesan = msg.message?.conversation || "";
-            }
-          }
-    
+      if (!msg.key.fromMe) {
+        if (await isNumberInFile(phone)) {
           if (pesan) {
             const messageData = {
               from: phone,
@@ -316,7 +294,14 @@ const initializeSessions = async () => {
           }
         }
       }
-    });
+        console.log(`New Message Received on Session ${msg.sessionId}:`);
+        console.log(`From: ${phone}`);
+        console.log(`Pesan: ${pesan}`);
+        console.log('--------------------------------------------------------');
+      }
+    
+      
+    );
     
 
     // Mulai semua sesi
