@@ -272,46 +272,52 @@ const initializeSessions = async () => {
 
     whatsapp.onMessageReceived(async (msg) => {
       const phone = msg.key.remoteJid.replace('@s.whatsapp.net', '');
-      if (await isNumberInFile(phone)) {
-        let pesan = null; // Default value
-        await whatsapp.readMessage({
-          sessionId: msg.sessionId,
-          key: msg.key,
-        });
-        // Check if 'fromMe' property is true, then set 'pesan' to null
-        if (msg.key.fromMe === true) {
-          pesan = null;
-            } else {
-                //pesan = message.extendedTextMessage && message.extendedTextMessage.text ? message.extendedTextMessage.text : "";
-                pesan = msg.message?.extendedTextMessage && msg.message?.extendedTextMessage.text ? msg.message?.extendedTextMessage.text : "";
-                if (pesan.trim() === "") { // Check if text is empty or whitespace
-                    pesan = msg.message?.conversation || ""; // Use conversation from msg.message if text is empty
-                }
-            }
-
-        if (pesan !== null) {
-          const messageData = {
-            from: phone,
-            message: pesan,
-            session: msg.sessionId
-          };
-
-          try {
-            await axios.post(`${process.env.FIREBASE_URL}/received.json`, messageData);
-            console.log(`Message logged to Firebase for session ${msg.sessionId}`);
-          } catch (error) {
-            console.error('Error logging message to Firebase:', error);
-          }
-        }
-      }
-      pesan = msg.message?.extendedTextMessage && msg.message?.extendedTextMessage.text ? msg.message?.extendedTextMessage.text : "";
+      let pesan = msg.message?.extendedTextMessage?.text || ""; // Default value
+      
       if (!msg.key.fromMe) {
         console.log(`New Message Received on Session ${msg.sessionId}:`);
         console.log(`From: ${phone}`);
         console.log(`Pesan: ${pesan}`);
         console.log('--------------------------------------------------------');
       }
+    
+      if (await isNumberInFile(phone)) {
+        // Only read and process the message if it's not from the current user
+        if (!msg.key.fromMe) {
+          await whatsapp.readMessage({
+            sessionId: msg.sessionId,
+            key: msg.key,
+          });
+    
+          // Set 'pesan' to null if the message is from the current user, otherwise handle it
+          if (msg.key.fromMe) {
+            pesan = null;
+          } else {
+            pesan = msg.message?.extendedTextMessage?.text || msg.message?.conversation || "";
+            
+            if (pesan.trim() === "") {
+              pesan = msg.message?.conversation || "";
+            }
+          }
+    
+          if (pesan) {
+            const messageData = {
+              from: phone,
+              message: pesan,
+              session: msg.sessionId
+            };
+    
+            try {
+              await axios.post(`${process.env.FIREBASE_URL}/received.json`, messageData);
+              console.log(`Message logged to Firebase for session ${msg.sessionId}`);
+            } catch (error) {
+              console.error('Error logging message to Firebase:', error);
+            }
+          }
+        }
+      }
     });
+    
 
     // Mulai semua sesi
     for (const sessionId of sessionFolders) {
