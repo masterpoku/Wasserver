@@ -281,12 +281,13 @@ const initializeSessions = async () => {
         // Check if 'fromMe' property is true, then set 'pesan' to null
         if (msg.key.fromMe === true) {
           pesan = null;
-        } else {
-          pesan = msg.message?.extendedTextMessage && msg.message?.extendedTextMessage.text ? msg.message?.extendedTextMessage.text : "";
-          if (pesan.trim() === "") { // Check if text is empty or whitespace
-            pesan = msg.message?.conversation || ""; // Use conversation from msg.message if text is empty
-          }
-        }
+            } else {
+                //pesan = message.extendedTextMessage && message.extendedTextMessage.text ? message.extendedTextMessage.text : "";
+                pesan = msg.message?.extendedTextMessage && msg.message?.extendedTextMessage.text ? msg.message?.extendedTextMessage.text : "";
+                if (pesan.trim() === "") { // Check if text is empty or whitespace
+                    pesan = msg.message?.conversation || ""; // Use conversation from msg.message if text is empty
+                }
+            }
 
         if (pesan !== null) {
           const messageData = {
