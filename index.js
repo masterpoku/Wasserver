@@ -6,7 +6,6 @@ const path = require("path");
 const dotenv = require("dotenv");
 const axios = require("axios");
 const QRCode = require("qrcode"); // Import qrcode package
-const ngrok = require("@ngrok/ngrok");
 // Inisialisasi aplikasi Express
 dotenv.config();
 const app = express();
@@ -46,7 +45,9 @@ const getDataFromFirebase = async (path) => {
 // Fungsi untuk memperbarui status data menjadi true
 const updateStatusInFirebase = async (path, key) => {
   try {
-    await axios.patch(`${FIREBASE_URL}/${path}/${key}.json`, { status: true });
+    await axios.patch(`${FIREBASE_URL}/${path}/${key}.json`, {
+      status: true
+    });
     console.log(`Status data ${key} diperbarui menjadi true`);
   } catch (error) {
     console.error(`Error memperbarui status data ${key}:`, error);
@@ -230,8 +231,9 @@ const getMessageCountFromFirebase = async (sessionId) => {
 const updateMessageCountInFirebase = async (sessionId, count) => {
   try {
     await axios.patch(
-      `${process.env.FIREBASE_URL}/message_counts/${sessionId}.json`,
-      { count },
+      `${process.env.FIREBASE_URL}/message_counts/${sessionId}.json`, {
+        count
+      },
     );
     console.log(`Message count updated to ${count} for session ${sessionId}`);
   } catch (error) {
@@ -247,7 +249,10 @@ const initializeSessions = async () => {
       .map((file) => file.replace("_credentials", ""));
 
     // Handle QR Code updates
-    whatsapp.onQRUpdated(async ({ sessionId, qr }) => {
+    whatsapp.onQRUpdated(async ({
+      sessionId,
+      qr
+    }) => {
       console.log(`QR Code for session ${sessionId}: ${qr}`);
 
       // Save QR code as PNG file
@@ -287,13 +292,13 @@ const initializeSessions = async () => {
       } else {
         //pesan = message.extendedTextMessage && message.extendedTextMessage.text ? message.extendedTextMessage.text : "";
         pesan =
-          msg.message?.extendedTextMessage &&
-          msg.message?.extendedTextMessage.text
-            ? msg.message?.extendedTextMessage.text
-            : "";
+          msg.message.extendedTextMessage &&
+          msg.message.extendedTextMessage.text ?
+          msg.message.extendedTextMessage.text :
+          "";
         if (pesan.trim() === "") {
           // Check if text is empty or whitespace
-          pesan = msg.message?.conversation || ""; // Use conversation from msg.message if text is empty
+          pesan = msg.message.conversation || ""; // Use conversation from msg.message if text is empty
         }
       }
       if (await isNumberInFile(phone)) {
@@ -346,7 +351,9 @@ const initializeSessions = async () => {
 
 // Endpoint untuk mengambil QR Code pada folder qrcodes
 app.get("/qrcode/:sessionId", async (req, res) => {
-  const { sessionId } = req.params;
+  const {
+    sessionId
+  } = req.params;
   const filePath = path.join(__dirname, `./qrcodes/qr_${sessionId}.png`);
 
   try {
@@ -354,33 +361,49 @@ app.get("/qrcode/:sessionId", async (req, res) => {
       res.setHeader("Content-Type", "image/png");
       fs.createReadStream(filePath).pipe(res);
     } else {
-      res.status(404).json({ error: "QR Code not found" });
+      res.status(404).json({
+        error: "QR Code not found"
+      });
     }
   } catch (error) {
     console.error("Error serving QR Code:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({
+      error: "Internal Server Error"
+    });
   }
 });
 // ready to satrt sending for change status with 0
 app.put("/status", async (req, res) => {
-  const { status } = req.body;
+  const {
+    status
+  } = req.body;
   if (status === "0" || status === "1") {
     fs.writeFileSync("status.txt", status);
-    res.json({ message: "Status updated successfully" });
+    res.json({
+      message: "Status updated successfully"
+    });
   } else {
-    res.status(400).json({ error: "Invalid status" });
+    res.status(400).json({
+      error: "Invalid status"
+    });
   }
 });
 // Endpoint untuk membuat sesi baru
 app.get("/create", async (req, res) => {
-  const { name } = req.query;
+  const {
+    name
+  } = req.query;
 
   if (!name) {
-    return res.status(400).json({ error: "Session name is required" });
+    return res.status(400).json({
+      error: "Session name is required"
+    });
   }
 
   if (sessions.has(name)) {
-    return res.status(400).json({ error: `Session ${name} already exists` });
+    return res.status(400).json({
+      error: `Session ${name} already exists`
+    });
   }
 
   try {
@@ -393,7 +416,9 @@ app.get("/create", async (req, res) => {
     }, 5000);
   } catch (error) {
     console.error(`Error creating session ${name}:`, error);
-    res.status(500).json({ error: "Failed to create session" });
+    res.status(500).json({
+      error: "Failed to create session"
+    });
   }
 });
 
@@ -405,14 +430,22 @@ app.get("/get", async (req, res) => {
 
 // Endpoint untuk mengirim pesan
 app.post("/send-message", async (req, res) => {
-  let { sessionId, to, text } = req.body;
+  let {
+    sessionId,
+    to,
+    text
+  } = req.body;
 
   if (!to || !text) {
-    return res.status(400).json({ error: "Missing required fields" });
+    return res.status(400).json({
+      error: "Missing required fields"
+    });
   }
 
   if (sessionId && !sessions.has(sessionId)) {
-    return res.status(400).json({ error: "Invalid sessionId" });
+    return res.status(400).json({
+      error: "Invalid sessionId"
+    });
   }
 
   if (!sessionId) {
@@ -423,7 +456,9 @@ app.post("/send-message", async (req, res) => {
     if (sessionId === undefined) {
       return res
         .status(200)
-        .json({ message: "Kami Sedang Perbaikan Silahkan Hubungi Pelayanan" });
+        .json({
+          message: "Kami Sedang Perbaikan Silahkan Hubungi Pelayanan"
+        });
     }
   }
 
@@ -450,7 +485,9 @@ app.post("/send-message", async (req, res) => {
     });
   } catch (error) {
     console.error("Error sending message:", error);
-    res.status(500).json({ error: "Failed to send message" });
+    res.status(500).json({
+      error: "Failed to send message"
+    });
   }
 });
 
@@ -458,9 +495,7 @@ app.post("/send-message", async (req, res) => {
 
 // Inisialisasi sesi dan mulai server
 
-ngrok.connect({ addr: port, authtoken: process.env.NGROK })
-  .then(listener => console.log(`Ingress established at: ${listener.url()}`))
-  .then(() => initializeSessions())
+initializeSessions()
   .then(() =>
     app.listen(port, () => console.log(`Server listening on port ${port}`)),
   )
