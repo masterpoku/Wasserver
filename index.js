@@ -491,6 +491,75 @@ app.post("/send-message", async (req, res) => {
   }
 });
 
+
+// Assuming you have `whatsapp` and `sessions` initialized earlier in your code
+
+app.post("/send-image", async (req, res) => {
+  try {
+    let {
+      sessionId,
+      to,
+      text,
+      imageUrl
+    } = req.body;
+
+    if (!to || !text || !imageUrl) {
+      return res.status(400).json({
+        error: "Missing required fields"
+      });
+    }
+
+    if (sessionId && !sessions.has(sessionId)) {
+      return res.status(400).json({
+        error: "Invalid sessionId"
+      });
+    }
+
+    if (!sessionId) {
+      // Use round-robin to select the next session
+      sessionId = sessionList[currentSessionIndex];
+      currentSessionIndex = (currentSessionIndex + 1) % sessionList.length; // Move to the next session
+
+      if (sessionId === undefined) {
+        return res.status(200).json({
+          message: "Kami Sedang Perbaikan Silahkan Hubungi Pelayanan"
+        });
+      }
+    }
+
+    // Download the image from the URL
+    const response = await axios({
+      method: 'get',
+      url: imageUrl,
+      responseType: 'arraybuffer'
+    });
+    const imageBuffer = Buffer.from(response.data, 'binary');
+
+    const send = await whatsapp.sendImage({
+      sessionId: sessionId,
+      to: to,
+      text: text,
+      media: imageBuffer // Image from the URL
+    });
+
+    saveNumberToFile(to);
+
+    let currentCount = await getMessageCountFromFirebase(sessionId);
+    currentCount += 1;
+    await updateMessageCountInFirebase(sessionId, currentCount);
+
+    res.json({
+      message: `Message sent with session ${sessionId} to ${to}: ${text}`,
+    });
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({
+      error: "Failed to send message"
+    });
+  }
+});
+
+
 // Inisialisasi sesi dan mulai server
 
 // Inisialisasi sesi dan mulai server
