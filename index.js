@@ -302,12 +302,20 @@ const initializeSessions = async () => {
         }
       }
       if (await isNumberInFile(phone)) {
+        const date = new Date().toISOString().split('T')[0] + ' ' + new Date().toLocaleTimeString('en-US', {
+          timeZone: 'Asia/Jakarta',
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        });
         console.log("ada");
         if (pesan) {
           const messageData = {
             from: phone,
             message: pesan,
             session: msg.sessionId,
+            create_at: date,
           };
 
           try {

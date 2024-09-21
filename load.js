@@ -1,21 +1,29 @@
 const axios = require('axios');
-const fs = require('fs');
-const dotenv = require('dotenv');
-const whatsapp = require('wa-multi-session');
-dotenv.config();
 
-// URL Firebase Realtime Database
-const FIREBASE_URL = process.env.FIREBASE_URL;
+async function fetchData() {
+    try {
+        const response = await axios.get('http://localhost/slt/test.php');
+        temporaryData = response.data || {}; // Simpan data ke temporaryData dari Firebase
+        return temporaryData;
+    } catch (error) {
+        console.error("Error mengambil data dari Firebase:", error);
+        return null;
+    }
 
-// URL Telegram Bot API
-const TELEGRAM_BOT_API = process.env.TELEGRAM_BOT_API;
-
-// Variabel untuk menyimpan data sementara
-
-
-// Daftar session untuk round-robin
-let sessionList = ["session1", "session2", "session3"]; // Ganti dengan sesi yang sesuai
-let currentSessionIndex = 0;
-
-
-module.exports = {processLoop};
+}
+fetchData().then((pesan) => {
+    const {
+        message,
+        data
+    } = pesan;
+    console.log(`pesan: ${message}`);
+    console.log(`id: ${data.id}`);
+    console.log(`number: ${data.number}`);
+    console.log(`message_id: ${data.message_id}`);
+    console.log(`status: ${data.status}`);
+    console.log(`created_at: ${data.created_at}`);
+    console.log(`updated_at: ${data.updated_at}`);
+    console.log(`message_text: ${data.message_text}`);
+}).catch((error) => {
+    console.error(error);
+});
